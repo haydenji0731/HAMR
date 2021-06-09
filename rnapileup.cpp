@@ -301,19 +301,24 @@ int main(int argc, char **argv) {
 
     bool rev_strand = bam1_strand(bam);
     bool rev_read = false;
-
-   char true_strand_tag[2] = {'X', 'S'};
-    if(pair_ends){
-	unsigned char* tagptr = NULL;
-	tagptr = bam_aux_get(bam, true_strand_tag);
-    	if(tagptr != NULL){
-		rev_strand = tagptr[1] == '-';
-			
-		
-	}else{
-		cerr<<"Could not find true strand tag. This didn't work\n";
-	}
+    if (pair_ends) {
+        if(bam->core.flag & 0x80) {
+            rev_read = true;
+        }
     }
+
+//   char true_strand_tag[2] = {'X', 'S'};
+//    if(pair_ends){
+//	unsigned char* tagptr = NULL;
+//	tagptr = bam_aux_get(bam, true_strand_tag);
+//    	if(tagptr != NULL){
+//		rev_strand = tagptr[1] == '-';
+//
+//
+//	}else{
+//		cerr<<"Could not find true strand tag. This didn't work\n";
+//	}
+//    }
  
     deque<Pileup>::iterator q_it( q.begin() );
     for(int i=0; i < (read_len-nclipend); ++i, ++q_it) {
@@ -344,7 +349,7 @@ int main(int argc, char **argv) {
       
       if (i == 0)
 	q_it->pileup += (rev_strand^rev_read && !no_ss) ? "$" : "^~";
-      else if (i == ((read_len-nclipend) - 1))
+      if (i == ((read_len-nclipend) - 1))
 	q_it->pileup += (rev_strand^rev_read && !no_ss) ? "^~" : "$";
 
       // make sure we don't go past end of ref seq
@@ -357,9 +362,8 @@ int main(int argc, char **argv) {
       char read_nuc = read_seq[i];
       char ref_nuc = ref_seq[g];
       if(rev_read^rev_strand){
-     //	
-     	//read_nuc = DNAComplementer()(read_nuc);
-	//ref_nuc = DNAComplementer()(ref_nuc);
+     	read_nuc = DNAComplementer()(read_nuc);
+	ref_nuc = DNAComplementer()(ref_nuc);
       } 
       if (ref_seq[g] == read_seq[i])
 	q_it->pileup += (rev_strand^rev_read && !no_ss) ? ',' : '.';
